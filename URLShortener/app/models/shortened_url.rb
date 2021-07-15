@@ -16,6 +16,19 @@ class ShortenedUrl < ApplicationRecord
     validates :long_url, :user_id, presence:true
     validates :short_url, presence:false
 
+    belongs_to :submitter,
+        primary_key: :id,
+        foreign_key: :user_id,
+        class_name: :User 
+
+    has_many :visited,
+        primary_key: :id,
+        foreign_key: :visited_short_urls,
+        class_name: :Visit 
+    
+    has_many :visitors,
+        through: :visited,
+        source: :visitors 
 
     def self.random_code
         tiny = SecureRandom::urlsafe_base64
@@ -30,4 +43,22 @@ class ShortenedUrl < ApplicationRecord
         filled = ShortenedUrl.new(long_url: long_url_str, short_url: ShortenedUrl.random_code, user_id: userobj.id)
         filled.save
     end
+
+    def num_clicks 
+        visitors.count 
+    end
+
+    def num_uniques
+        visitors.distinct.count 
+    end
+
+    # def recent_uniques 
+    #     visitors.distinct.where('created_at'>10).count 
+    # end
+
+    def recent_uniques
+        visitors.select('user_id').distinct.where('created_at'>?,'10').count
+    end
+
+
 end
